@@ -3,6 +3,8 @@ import time
 import numpy as np
 import abc
 import json
+import cv2
+import os
 
 ############################################################
 ###########          CAMERA FACTORY              ###########
@@ -96,54 +98,79 @@ class ImageGrabber(threading.Thread):
 #################           ZED MINI                    #################
 #########################################################################
 
-import pyzed.sl as sl
+# import pyzed.sl as sl
+
+# @register_camera_to_factory()
+# class ZEDMini(ImageGrabber):
+#     _name = 'ZED_Mini'
+#     _key_to_res = {
+#         '2K' : sl.RESOLUTION.RESOLUTION_HD2K,
+#         '1080p' : sl.RESOLUTION.RESOLUTION_HD1080,
+#         '720p' : sl.RESOLUTION.RESOLUTION_HD720,
+#         'VGA' : sl.RESOLUTION.RESOLUTION_VGA
+#     }
+
+#     """ Read Stereo frames from a ZED Mini stereo camera. """
+#     def _read_frame(self):
+#         err = self._cam.grab(self._runtime)
+#         if err == sl.ERROR_CODE.SUCCESS:
+#             self._cam.retrieve_image(self._left_frame, sl.VIEW.VIEW_LEFT)
+#             self._cam.retrieve_image(self._right_frame, sl.VIEW.VIEW_RIGHT)
+#             return self._left_frame.get_data()[:,:,:3], self._right_frame.get_data()[:,:,:3]
+    
+#     def _connect_to_camera(self):
+#         # road option from config file
+#         with open(self._config) as f_in:
+#             self._config = json.load(f_in)
+
+#         self._params = sl.InitParameters()
+        
+#         if 'resolution' in self._config:
+#             self._params.camera_resolution = self._key_to_res[self._config['resolution']]
+#         else:
+#             self._params.camera_resolution = sl.RESOLUTION.RESOLUTION_HD720
+        
+#         if 'fps' in self._config:
+#             self._params.camera_fps = self._config['fps']
+#         else:
+#             self._params.camera_fps = 30
+        
+#         self._cam = sl.Camera()
+#         status = self._cam.open(self._params)
+#         if status != sl.ERROR_CODE.SUCCESS:
+#             print(status)
+#             raise Exception('Unable to connect to Stereo Camera')
+#         self._runtime = sl.RuntimeParameters()
+#         self._left_frame = sl.Mat()
+#         self._right_frame = sl.Mat()
+
+#     def _disconnect_from_camera(self):
+#         self._cam.close()        
+
+
+#########################################################################
+#################        SIMULATED REALSENSE            #################
+#########################################################################
 
 @register_camera_to_factory()
-class ZEDMini(ImageGrabber):
-    _name = 'ZED_Mini'
-    _key_to_res = {
-        '2K' : sl.RESOLUTION.RESOLUTION_HD2K,
-        '1080p' : sl.RESOLUTION.RESOLUTION_HD1080,
-        '720p' : sl.RESOLUTION.RESOLUTION_HD720,
-        'VGA' : sl.RESOLUTION.RESOLUTION_VGA
-    }
+class SimulatedRealSense(ImageGrabber):
+    _name = 'SimulatedRealSense'
+    _dataset_dir = '/data/datasets/RealSense-lab/1-20210127_005749-no-laser'
+    _images_list = os.listdir(_dataset_dir + '/image_02')
 
-    """ Read Stereo frames from a ZED Mini stereo camera. """
+    """ Read Stereo frames from a RealSense infrared image dataset. """
     def _read_frame(self):
-        err = self._cam.grab(self._runtime)
-        if err == sl.ERROR_CODE.SUCCESS:
-            self._cam.retrieve_image(self._left_frame, sl.VIEW.VIEW_LEFT)
-            self._cam.retrieve_image(self._right_frame, sl.VIEW.VIEW_RIGHT)
-            return self._left_frame.get_data()[:,:,:3], self._right_frame.get_data()[:,:,:3]
+        index_generator = (i in range(len(self._images_list)))
+        file_name = os.path.splitext(self._images_list[i])[0].split(str="_")[-1] + '.png'
+        self._left_frame = cv2.imread('infrared_2_' + file_name)
+        self._right_frame = cv2.imread('infrared_3_' + file_name)
+        return self._left_frame, self._right_frame
     
     def _connect_to_camera(self):
-        # road option from config file
-        with open(self._config) as f_in:
-            self._config = json.load(f_in)
-
-        self._params = sl.InitParameters()
-        
-        if 'resolution' in self._config:
-            self._params.camera_resolution = self._key_to_res[self._config['resolution']]
-        else:
-            self._params.camera_resolution = sl.RESOLUTION.RESOLUTION_HD720
-        
-        if 'fps' in self._config:
-            self._params.camera_fps = self._config['fps']
-        else:
-            self._params.camera_fps = 30
-        
-        self._cam = sl.Camera()
-        status = self._cam.open(self._params)
-        if status != sl.ERROR_CODE.SUCCESS:
-            print(status)
-            raise Exception('Unable to connect to Stereo Camera')
-        self._runtime = sl.RuntimeParameters()
-        self._left_frame = sl.Mat()
-        self._right_frame = sl.Mat()
+        pass
 
     def _disconnect_from_camera(self):
-        self._cam.close()        
+        pass
 
 
 #########################################################################
