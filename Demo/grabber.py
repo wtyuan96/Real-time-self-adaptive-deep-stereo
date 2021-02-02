@@ -157,13 +157,15 @@ class SimulatedRealSense(ImageGrabber):
     _name = 'SimulatedRealSense'
     _dataset_dir = '/data/datasets/RealSense-lab/1-20210127_005749-no-laser'
     _images_list = os.listdir(_dataset_dir + '/image_02')
+    _index_generator = (i for i in range(len(_images_list)))
 
     """ Read Stereo frames from a RealSense infrared image dataset. """
     def _read_frame(self):
-        index_generator = (i in range(len(self._images_list)))
-        file_name = os.path.splitext(self._images_list[i])[0].split(str="_")[-1] + '.png'
-        self._left_frame = cv2.imread('infrared_2_' + file_name)
-        self._right_frame = cv2.imread('infrared_3_' + file_name)
+        
+        index = next(self._index_generator)
+        file_name = os.path.splitext(self._images_list[index])[0].split("_")[-1] + '.png'
+        self._left_frame = cv2.imread(self._dataset_dir + '/image_02/infrared_1_' + file_name)
+        self._right_frame = cv2.imread(self._dataset_dir + '/image_03/infrared_2_' + file_name)
         return self._left_frame, self._right_frame
     
     def _connect_to_camera(self):

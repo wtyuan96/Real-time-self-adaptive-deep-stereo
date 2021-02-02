@@ -24,6 +24,7 @@ if __name__=='__main__':
     parser.add_argument("--SSIMTh",help="reset network to initial configuration if loss is above this value",type=float,default=0.5)
     parser.add_argument("--cameraConfig", help="path to a configuration file for the camera", default='/home/alessio/code/Real-time-self-adaptive-deep-stereo/Demo/configuration.json')
     parser.add_argument("--cameraName", help="name of the camera grabber to build", default="ZED_Mini", choices=grabber.get_available_camera())
+    parser.add_argument("--output", help="path of output dir", default=None)
     args = parser.parse_args()
 
     # assert(os.path.exists(args.cameraConfig))
@@ -42,7 +43,8 @@ if __name__=='__main__':
         image_shape = args.imageShape,
         crop_shape=args.cropShape,
         SSIMTh = args.SSIMTh,
-        mode = args.mode
+        mode = args.mode,
+        output_dir=args.output
         )
     gg = grabber.get_camera(
         args.cameraName,

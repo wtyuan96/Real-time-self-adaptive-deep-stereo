@@ -26,7 +26,8 @@ class RealTimeStereo(threading.Thread):
         image_shape=[480,640],
         crop_shape=[None,None],
         SSIMTh=0.5,
-        mode='MAD'):
+        mode='MAD',
+        output_dir=None):
         """
         Create a self adaptive deep stereo system
         Args
@@ -49,6 +50,7 @@ class RealTimeStereo(threading.Thread):
             reset the network to the initial configuration if current SSIM > SSIMTh
         mode: string
             nline adaptation mode: NONE - perform only inference, FULL - full online backprop, MAD - backprop only on portions of the network
+        output_dir: path of output dir
         """
         self._camera_buffer = camera_buffer
         self._model_name = model_name
@@ -62,6 +64,7 @@ class RealTimeStereo(threading.Thread):
         self._stop_flag = False
         self._ready = self._setup_graph()
         self._ready &= self._initialize_model()
+        self._output_dir = output_dir
         threading.Thread.__init__(self)
 
     def _load_block_config(self):
@@ -231,7 +234,7 @@ class RealTimeStereo(threading.Thread):
         self._stop_flag =True
 
     def run(self):
-        self._setup_gui()
+        # self._setup_gui()
         first=True
         it=0
         while not self._stop_flag:
@@ -277,10 +280,11 @@ class RealTimeStereo(threading.Thread):
                 self._restore_op()
             
             #show current detection
-            cv2.imshow(self._camera_window_name_left, lefty[0].astype(np.uint8))
-            cv2.imshow(self._camera_window_name_right, righty[0].astype(np.uint8))
-            cv2.imshow(self._disparity_window_name, cv2.applyColorMap(disp_prediction[0].astype(np.uint8),cv2.COLORMAP_JET))
-            cv2.waitKey(1)
+            # cv2.imshow(self._camera_window_name_left, lefty[0].astype(np.uint8))
+            # cv2.imshow(self._camera_window_name_right, righty[0].astype(np.uint8))
+            # cv2.imshow(self._disparity_window_name, cv2.applyColorMap(disp_prediction[0].astype(np.uint8),cv2.COLORMAP_JET))
+            # cv2.waitKey(1)        
+            cv2.imwrite(self._output_dir + '/' + str(it) + '.png', cv2.applyColorMap(disp_prediction[0].astype(np.uint8),cv2.COLORMAP_JET))
             it+=1
         
         #close session
